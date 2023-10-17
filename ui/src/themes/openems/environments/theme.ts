@@ -3,7 +3,7 @@ import { Theme } from 'src/environments';
 export const theme = {
     theme: "OpenEMS" as Theme,
 
-    uiTitle: "OpenEMS UI",
+    uiTitle: "Gridcharge Energy Manager",
     edgeShortName: "OpenEMS",
     edgeLongName: "Open Energy Management System",
 
