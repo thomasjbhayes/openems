@@ -5,7 +5,7 @@
     "developed": "This user interface is developed as open-source software.",
     "faq": "Frequently asked questions (FAQ)",
     "language": "Select language:",
-    "openEMS": "More about Gridcharge EMS",
+    "openEMS": "More about GridVolt EMS",
     "patchnotes": "Changes in the monitoring for this build"
   },
   "Edge": {
@@ -550,7 +550,7 @@
     "connectionFailed": "Connection to {{ value }} failed.",
     "connectionSuccessful": "Successfully connected to {{ value }}.",
     "deviceOffline": "The device is not connected!",
-    "isOffline": "Gridcharge EMS is offline!",
+    "isOffline": "GridVolt EMS is offline!",
     "LOGGED_IN_AS": "Logged in as",
     "toEnergymonitor": "To Energymonitor...",
     "TYPE": "Type",

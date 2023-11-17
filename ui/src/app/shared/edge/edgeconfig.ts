@@ -367,11 +367,11 @@ export class EdgeConfig {
     public listAvailableFactories(): CategorizedFactories[] {
         let allFactories = [
             {
-                category: { title: 'Simulatoren', icon: 'flask-outline' },
+                category: { title: 'Simulator', icon: 'flask-outline' },
                 factories: Object.values(this.factories).filter(factory => factory.id.startsWith('Simulator.'))
             },
             {
-                category: { title: 'Zähler', icon: 'speedometer-outline' },
+                category: { title: 'Meters', icon: 'speedometer-outline' },
                 factories: [
                     this.getFactoriesByNature("io.openems.edge.meter.api.SymmetricMeter"), // TODO replaced by ElectricityMeter
                     this.getFactoriesByNature("io.openems.edge.meter.api.ElectricityMeter"),
@@ -379,7 +379,7 @@ export class EdgeConfig {
                 ]
             },
             {
-                category: { title: 'Speichersysteme', icon: 'battery-charging-outline' },
+                category: { title: 'ESS', icon: 'battery-charging-outline' },
                 factories: [
                     this.getFactoriesByNature("io.openems.edge.ess.api.SymmetricEss"),
                     this.getFactoriesByNature("io.openems.edge.battery.api.Battery"),
@@ -387,7 +387,7 @@ export class EdgeConfig {
                 ]
             },
             {
-                category: { title: 'Speichersystem-Steuerung', icon: 'options-outline' },
+                category: { title: 'ESS Controller', icon: 'options-outline' },
                 factories: [
                     this.getFactoriesByIdsPattern([
                         /Controller\.Asymmetric.*/,
@@ -397,13 +397,13 @@ export class EdgeConfig {
                 ]
             },
             {
-                category: { title: 'E-Auto-Ladestation', icon: 'car-outline' },
+                category: { title: 'EV Charging Station', icon: 'car-outline' },
                 factories: [
                     this.getFactoriesByNature("io.openems.edge.evcs.api.Evcs")
                 ]
             },
             {
-                category: { title: 'E-Auto-Ladestation-Steuerung', icon: 'options-outline' },
+                category: { title: 'EV Charging Station Controller', icon: 'options-outline' },
                 factories: [
                     this.getFactoriesByIds([
                         'Controller.Evcs'
@@ -418,7 +418,7 @@ export class EdgeConfig {
                 ]
             },
             {
-                category: { title: 'I/O-Steuerung', icon: 'options-outline' },
+                category: { title: 'I/O-Controller', icon: 'options-outline' },
                 factories: [
                     this.getFactoriesByIds([
                         'Controller.IO.ChannelSingleThreshold',
@@ -429,13 +429,13 @@ export class EdgeConfig {
                 ]
             },
             {
-                category: { title: 'Temperatursensoren', icon: 'thermometer-outline' },
+                category: { title: 'Temperature Sensors', icon: 'thermometer-outline' },
                 factories: [
                     this.getFactoriesByNature("io.openems.edge.thermometer.api.Thermometer")
                 ]
             },
             {
-                category: { title: 'Externe Schnittstellen', icon: 'megaphone-outline' },
+                category: { title: 'External Interfaces', icon: 'megaphone-outline' },
                 factories: [
                     this.getFactoriesByIds([
                         'Controller.Api.Websocket',
@@ -449,7 +449,7 @@ export class EdgeConfig {
                 ]
             },
             {
-                category: { title: 'Geräte-Schnittstellen', icon: 'swap-horizontal-outline' },
+                category: { title: 'Comms Bridges', icon: 'swap-horizontal-outline' },
                 factories: [
                     this.getFactoriesByIds([
                         'Bridge.Mbus',
@@ -460,7 +460,7 @@ export class EdgeConfig {
                 ]
             },
             {
-                category: { title: 'Standard-Komponenten', icon: 'resize-outline' },
+                category: { title: 'Standard Components', icon: 'resize-outline' },
                 factories: [
                     this.getFactoriesByIds([
                         'Controller.Api.Backend',
@@ -473,13 +473,13 @@ export class EdgeConfig {
                 ]
             },
             {
-                category: { title: 'Spezial-Controller', icon: 'repeat-outline' },
+                category: { title: 'Special Controllers', icon: 'repeat-outline' },
                 factories: [
                     this.getFactoriesByNature("io.openems.edge.controller.api.Controller")
                 ]
             },
             {
-                category: { title: 'Weitere', icon: 'radio-button-off-outline' },
+                category: { title: 'Other', icon: 'radio-button-off-outline' },
                 factories: Object.values(this.factories)
             }
         ];

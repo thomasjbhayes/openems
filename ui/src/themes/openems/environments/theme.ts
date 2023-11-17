@@ -3,9 +3,9 @@ import { Theme } from 'src/environments';
 export const theme = {
     theme: "OpenEMS" as Theme,
 
-    uiTitle: "Gridcharge Energy Manager",
-    edgeShortName: "OpenEMS",
-    edgeLongName: "Open Energy Management System",
+    uiTitle: "GridVolt Energy Manager",
+    edgeShortName: "GridVolt",
+    edgeLongName: "GridVolt Energy Management System",
 
     docsUrlPrefix: "https://github.com/OpenEMS/openems/blob/develop/",
     links: {

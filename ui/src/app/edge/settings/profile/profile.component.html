@@ -7,7 +7,7 @@
         <ion-card>
           <ion-item color="light" lines="full">
             <ion-icon slot="start" name="today-outline" color="primary"></ion-icon>
-            <ion-label>Allgemeine Daten</ion-label>
+            <ion-label>System Information</ion-label>
           </ion-item>
 
           <ion-card-content>
@@ -17,11 +17,11 @@
                 {{ edge.id }}
               </ion-item>
               <ion-item *ngIf="edge.comment">
-                <ion-label>Kommentar</ion-label>
+                <ion-label>Comment</ion-label>
                 {{ edge.comment }}
               </ion-item>
               <ion-item *ngIf="edge.producttype">
-                <ion-label>Product-Typ</ion-label>
+                <ion-label>Product-Type</ion-label>
                 {{ edge.producttype }}
               </ion-item>
               <ion-item>
@@ -29,7 +29,7 @@
                 <a routerLinkActive="active" routerLink="/changelog">{{ edge.version | version:edge.role }}</a>
               </ion-item>
               <ion-item>
-                <ion-label>Rolle</ion-label>
+                <ion-label>Role</ion-label>
                 {{ edge.getRoleString() }}
               </ion-item>
               <ion-item lines="none" *ngIf="edge.firstSetupProtocol">
