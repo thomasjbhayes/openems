@@ -1,0 +1,18 @@
+Bundle-Name: OpenEMS Backend Gridvolt Metadata
+Bundle-Vendor: RVR Energy Technology Ltd
+Bundle-License: https://opensource.org/licenses/EPL-2.0
+Bundle-Version: 1.0.0.${tstamp}
+
+
+-buildpath: \
+	${buildpath},\
+	com.zaxxer.HikariCP,\
+	io.openems.backend.common,\
+	io.openems.common,\
+	io.openems.wrapper.aXMLRPC,\
+	org.postgresql.jdbc,\
+	io.jsonwebtoken.jjwt-api,\
+	io.jsonwebtoken.jjwt-gson,\
+	io.jsonwebtoken.jjwt-impl
+-testpath: \
+	${testpath}
