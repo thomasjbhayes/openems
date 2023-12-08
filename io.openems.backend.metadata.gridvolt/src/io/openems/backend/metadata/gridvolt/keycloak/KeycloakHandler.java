@@ -16,6 +16,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringJoiner;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -50,6 +53,8 @@ public class KeycloakHandler {
 	private String keycloakClientId;
 	private String keycloakClientSecret;
 	private PublicKey keycloakServerPublicKey;
+	
+	private final Logger log = LoggerFactory.getLogger(KeycloakHandler.class);
 	
 	public KeycloakHandler(MetadataGridvolt parent, Config config) {
 		this.parent = parent;
@@ -92,8 +97,8 @@ public class KeycloakHandler {
 		try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             tokenResponse = gson.fromJson(response.body(), TokenResponse.class);
-            System.out.println("Response status code: " + response.statusCode());
-            System.out.println("Response body: " + response.body());
+            log.info("Response status code: " + response.statusCode());
+            log.info("Response body: " + response.body());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -114,7 +119,7 @@ public class KeycloakHandler {
 		
 		try {
 			Map<String, Object> userDetails = parseJwtToken(token, publicKey);
-            System.out.println("User Details: " + userDetails);
+			log.info("User Details: " + userDetails);
 		} catch (Exception e) {
             e.printStackTrace();
         }
@@ -145,8 +150,8 @@ public class KeycloakHandler {
 		
 		try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println("Response status code: " + response.statusCode());
-            System.out.println("Response body: " + response.body());
+            log.info("Response status code: " + response.statusCode());
+            log.info("Response body: " + response.body());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -168,14 +173,14 @@ public class KeycloakHandler {
 		
 		try {
 			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println("Response status code: " + response.statusCode());
-            System.out.println("Response body: " + response.body());
+			log.info("Response status code: " + response.statusCode());
+			log.info("Response body: " + response.body());
             
             if (response.statusCode() == 200) {
                 publicKey = extractPublicKeyFromJwks(response.body());
-                System.out.println("Public Key: " + publicKey);
+                log.info("Public Key: " + publicKey);
             } else {
-                System.out.println("Failed to retrieve JWKS. HTTP Status Code: " + response.statusCode());
+            	log.info("Failed to retrieve JWKS. HTTP Status Code: " + response.statusCode());
             }
             
 		} catch (Exception e) {

@@ -15,6 +15,7 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.service.event.EventHandler;
 import org.osgi.service.event.propertytypes.EventTopics;
+import org.osgi.service.metatype.annotations.Designate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ import io.openems.backend.common.metadata.Metadata;
 import io.openems.backend.common.metadata.User;
 import io.openems.backend.metadata.gridvolt.keycloak.KeycloakHandler;
 import io.openems.backend.metadata.gridvolt.keycloak.TokenResponse;
+import io.openems.backend.metadata.gridvolt.Config;
 import io.openems.common.OpenemsOEM.Manufacturer;
 import io.openems.common.exceptions.OpenemsError.OpenemsNamedException;
 import io.openems.common.exceptions.OpenemsException;
@@ -35,13 +37,14 @@ import io.openems.common.jsonrpc.request.GetEdgesRequest.PaginationOptions;
 import io.openems.common.jsonrpc.response.GetEdgesResponse.EdgeMetadata;
 import io.openems.common.session.Language;
 
+@Designate(ocd = Config.class, factory = false)
 @Component(
 		name="Metadata.Gridvolt", //
 		configurationPolicy = ConfigurationPolicy.REQUIRE, //
 		immediate = true //
 )
 @EventTopics({ //
-	Edge.Events.ON_SET_CONFIG //
+	Edge.Events.ALL_EVENTS //
 })
 public class MetadataGridvolt extends AbstractMetadata implements Metadata, EventHandler {
 	
@@ -82,8 +85,7 @@ public class MetadataGridvolt extends AbstractMetadata implements Metadata, Even
 	public User authenticate(String token) throws OpenemsNamedException {
 		// Takes token (JWT) as parameter, validates the token and returns the user obj.
 		
-		// Valiu
-		return null;
+		return keycloakHandler.validateToken(token);
 	}
 	
 	@Override

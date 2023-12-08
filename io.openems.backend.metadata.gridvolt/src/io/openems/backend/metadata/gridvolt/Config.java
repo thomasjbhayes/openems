@@ -23,4 +23,19 @@ public @interface Config {
 	@AttributeDefinition(name = "Keycloak Client Secret", description = "Keycloak client secret")
 	String keycloakClientSecret() default "";
 	
+	@AttributeDefinition(name = "Postgres Host", description = "The Postgres host")
+	String pgHost() default "localhost";
+
+	@AttributeDefinition(name = "Postgres Port", description = "The Postgres port")
+	int pgPort() default 5432;
+
+	@AttributeDefinition(name = "Postgres Username", description = "The Postgres username")
+	String pgUser() default "odoo";
+
+	@AttributeDefinition(name = "Postgres Password", description = "The Postgres password")
+	String pgPassword();
+
+	@AttributeDefinition(name = "Database", description = "The database name")
+	String database();
+	
 }
