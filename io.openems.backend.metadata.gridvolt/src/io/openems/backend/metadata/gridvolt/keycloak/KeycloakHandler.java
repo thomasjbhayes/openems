@@ -1,16 +1,16 @@
 package io.openems.backend.metadata.gridvolt.keycloak;
 
-import static org.junit.Assert.assertNotNull;
 
+import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyFactory;
 import java.security.PublicKey;
-import java.security.spec.X509EncodedKeySpec;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,29 +19,20 @@ import java.util.StringJoiner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
-/*
-import org.keycloak.adapters.KeycloakDeployment;
-import org.keycloak.adapters.KeycloakDeploymentBuilder;
-import org.keycloak.adapters.rotation.AdapterTokenVerifier;
-//import org.keycloak.admin.client.
-import org.keycloak.admin.client.Keycloak;
-import org.keycloak.admin.client.KeycloakBuilder;
-import org.keycloak.common.VerificationException;
-import org.keycloak.representations.AccessToken;
-import org.keycloak.representations.AccessTokenResponse;
-import org.keycloak.representations.adapters.config.AdapterConfig;
- */ 
 import io.openems.backend.common.metadata.User;
 import io.openems.backend.metadata.gridvolt.Config;
 import io.openems.backend.metadata.gridvolt.MetadataGridvolt;
-import io.openems.common.session.Language;
+import io.openems.common.exceptions.OpenemsError;
+import io.openems.common.exceptions.OpenemsError.OpenemsNamedException;
 import io.openems.common.session.Role;
 
 
@@ -53,31 +44,32 @@ public class KeycloakHandler {
 	private String keycloakClientId;
 	private String keycloakClientSecret;
 	private PublicKey keycloakServerPublicKey;
+	private Gson gson;
 	
 	private final Logger log = LoggerFactory.getLogger(KeycloakHandler.class);
 	
 	public KeycloakHandler(MetadataGridvolt parent, Config config) {
 		this.parent = parent;
-		//this.config = config;
 		this.baseUrl = String.format("%s:%s", config.keycloakUrl(), config.keycloakPort());
 		this.keycloakRealm = config.keycloakRealm();
 		this.keycloakClientId = config.keycloakClientId();
 		this.keycloakClientSecret = config.keycloakClientSecret();
 		this.keycloakServerPublicKey = null;
+		
+		this.gson = new GsonBuilder()
+				.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+				.create();	
 	}
 	
 	
 	/**
-	 * 
+	 * Calls the Keycloak token endpoint. Uses the ROPC flow which must be configured on the server.
 	 * @param username
 	 * @param password
 	 */
 	public TokenResponse authenticate(String username, String password) {
-		
-		String tokenEndpointUrl = this.getTokenEndpointUrl();
-		
+				
 		HttpClient client = HttpClient.newHttpClient();
-		Gson gson = new Gson();
 		
 		TokenResponse tokenResponse = null;
 		
@@ -96,9 +88,8 @@ public class KeycloakHandler {
 		
 		try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            tokenResponse = gson.fromJson(response.body(), TokenResponse.class);
+            tokenResponse = this.gson.fromJson(response.body(), TokenResponse.class);
             log.info("Response status code: " + response.statusCode());
-            log.info("Response body: " + response.body());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -111,20 +102,61 @@ public class KeycloakHandler {
 	 * @param token
 	 * @return The user that corresponds to the token
 	 */
-	public User validateToken(String token) {
+	public User validateToken(String token) throws OpenemsNamedException {
 		
 		User user = null;
+		
+		if (token == null) {
+			return user;
+		}
 		
 		PublicKey publicKey = this.getKeycloakPublicKey();
 		
 		try {
 			Map<String, Object> userDetails = parseJwtToken(token, publicKey);
-			log.info("User Details: " + userDetails);
+			String username = userDetails.get("preferred_username").toString();
+			String userId = userDetails.get("sub").toString();
+			user = this.parent.getPostgresHandler().user.getUser(userId, username, token);
+			HashMap<String, Role> roles = this.parent.getPostgresHandler().edge.getEdgeRolesForUser(user);
+			
+			for (Map.Entry<String, Role> entry : roles.entrySet()) {
+				user.setRole(entry.getKey(), entry.getValue());
+			}
+			return user;
 		} catch (Exception e) {
             e.printStackTrace();
         }
 		
-		return user; 
+		throw new OpenemsNamedException(OpenemsError.GENERIC, "Exception while getting user for token"); 
+		
+	}
+	
+	/***
+	 * Logs out the current user. Calls the Keycloak logout endpoint.
+	 * @param user
+	 * @param refreshToken
+	 */
+	public void logout(User user, String refreshToken) {
+		
+		HttpClient client = HttpClient.newHttpClient();
+		
+		Map<Object, Object> data = new HashMap<>();
+		data.put("client_id", this.keycloakClientId);
+		data.put("client_secret", this.keycloakClientSecret);
+		data.put("refresh_token", refreshToken);
+		
+		HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create(this.getLogoutEndpointUrl()))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(buildFormDataFromMap(data))
+				.build();
+
+		try {
+			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+			log.info("Response status code: " + response.statusCode());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 	}
 	
@@ -135,7 +167,6 @@ public class KeycloakHandler {
 	public void introspectToken(String token) {
 		
 		HttpClient client = HttpClient.newHttpClient();
-		Gson gson = new Gson();
 		
 		Map<Object, Object> data = new HashMap<>();
 		data.put("client_id", this.keycloakClientId);
@@ -151,12 +182,11 @@ public class KeycloakHandler {
 		try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             log.info("Response status code: " + response.statusCode());
-            log.info("Response body: " + response.body());
         } catch (Exception e) {
             e.printStackTrace();
         }
 	}
-	
+		
 	/**
 	 * Makes a request to the Keycloak certs endpoint to get the public key
 	 * @return PublicKey or null
@@ -174,11 +204,9 @@ public class KeycloakHandler {
 		try {
 			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 			log.info("Response status code: " + response.statusCode());
-			log.info("Response body: " + response.body());
             
             if (response.statusCode() == 200) {
                 publicKey = extractPublicKeyFromJwks(response.body());
-                log.info("Public Key: " + publicKey);
             } else {
             	log.info("Failed to retrieve JWKS. HTTP Status Code: " + response.statusCode());
             }
@@ -189,6 +217,11 @@ public class KeycloakHandler {
 		return publicKey;
 	}
 	
+	/***
+	 * Returns the publicKey for the Keycloak server. If we have already fetched the key, it uses the stored version
+	 * If not, it fetches it from the server.
+	 * @return The Public Key
+	 */
 	private PublicKey getKeycloakPublicKey() {
 		if (this.keycloakServerPublicKey == null) {
 			this.keycloakServerPublicKey = this.fetchKeycloakPublicKeyFromServer();
@@ -197,15 +230,19 @@ public class KeycloakHandler {
 	}
 	
 	private String getTokenEndpointUrl() {
-		return String.format("%s/realms/%s/protocol/openid-connect/token", this.baseUrl, this.keycloakRealm); 
+		return String.format("%s/auth/realms/%s/protocol/openid-connect/token", this.baseUrl, this.keycloakRealm); 
+	}
+	
+	private String getLogoutEndpointUrl() {
+		return String.format("%s/auth/realms/%s/protocol/openid-connect/logout", this.baseUrl, this.keycloakRealm);
 	}
 	
 	private String getTokenIntrospectionUrl() {
-		return String.format("%s/realms/%s/protocol/openid-connect/token/introspect", this.baseUrl, this.keycloakRealm);
+		return String.format("%s/auth/realms/%s/protocol/openid-connect/token/introspect", this.baseUrl, this.keycloakRealm);
 	}
 	
 	private String getCertsUrl() {
-		return String.format("%s/realms/%s/protocol/openid-connect/certs", this.baseUrl, this.keycloakRealm);
+		return String.format("%s/auth/realms/%s/protocol/openid-connect/certs", this.baseUrl, this.keycloakRealm);
 	}
 	
 	private static HttpRequest.BodyPublisher buildFormDataFromMap(Map<Object, Object> data) {
@@ -217,17 +254,35 @@ public class KeycloakHandler {
         return HttpRequest.BodyPublishers.ofString(builder.toString());
     }
 	
+	/**
+	 * Gets the public key for the server from the JWKS response we fetched from the server.
+	 * @param jwksResponse
+	 * @return
+	 * @throws Exception
+	 */
 	private static PublicKey extractPublicKeyFromJwks(String jwksResponse) throws Exception {
-        JsonObject jwks = JsonParser.parseString(jwksResponse).getAsJsonObject();
-        String publicKeyEncoded = jwks.getAsJsonArray("keys").get(0).getAsJsonObject().get("x5c").getAsString();
-        
-        byte[] decoded = Base64.getDecoder().decode(publicKeyEncoded);
-        X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+	    JsonObject jwks = JsonParser.parseString(jwksResponse).getAsJsonObject();
+	    String x5cEncoded = jwks.getAsJsonArray("keys").get(0).getAsJsonObject().get("x5c").getAsString();
 
-        return keyFactory.generatePublic(spec);
-    }
+	    // Decode the base64 encoded certificate
+	    byte[] decoded = Base64.getDecoder().decode(x5cEncoded);
+
+	    // Generate X.509 certificate from the decoded bytes
+	    CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+	    X509Certificate certificate = (X509Certificate) certificateFactory.generateCertificate(new ByteArrayInputStream(decoded));
+
+	    // Extract public key from the certificate
+	    PublicKey publicKey = certificate.getPublicKey();
+	    return publicKey;
+	}
+
 	
+	/**
+	 * Verifies and parses the JWT token with the public key and returns the claims.
+	 * @param jwtToken
+	 * @param publicKey
+	 * @return
+	 */
 	private static Map<String, Object> parseJwtToken(String jwtToken, PublicKey publicKey) {
         Jws<Claims> jwsClaims = Jwts.parser()
             .verifyWith(publicKey)

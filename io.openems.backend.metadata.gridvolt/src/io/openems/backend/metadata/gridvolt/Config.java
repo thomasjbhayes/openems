@@ -30,12 +30,12 @@ public @interface Config {
 	int pgPort() default 5432;
 
 	@AttributeDefinition(name = "Postgres Username", description = "The Postgres username")
-	String pgUser() default "odoo";
+	String pgUser() default "";
 
 	@AttributeDefinition(name = "Postgres Password", description = "The Postgres password")
 	String pgPassword();
 
-	@AttributeDefinition(name = "Database", description = "The database name")
+	@AttributeDefinition(name = "Database", description = "The database name for the edge data. NOT the Keycloak DB name.")
 	String database();
 	
 }
