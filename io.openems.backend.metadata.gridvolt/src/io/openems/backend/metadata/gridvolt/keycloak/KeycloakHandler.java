@@ -33,6 +33,7 @@ import io.openems.backend.metadata.gridvolt.Config;
 import io.openems.backend.metadata.gridvolt.MetadataGridvolt;
 import io.openems.common.exceptions.OpenemsError;
 import io.openems.common.exceptions.OpenemsError.OpenemsNamedException;
+import io.openems.common.exceptions.OpenemsException;
 import io.openems.common.session.Role;
 
 
@@ -113,6 +114,7 @@ public class KeycloakHandler {
 		PublicKey publicKey = this.getKeycloakPublicKey();
 		
 		try {
+			// If the JWT parses and a user exists for the token, we should probably create a user in the DB. Currently the DB user needs to be inserted manually
 			Map<String, Object> userDetails = parseJwtToken(token, publicKey);
 			String username = userDetails.get("preferred_username").toString();
 			String userId = userDetails.get("sub").toString();
@@ -125,10 +127,9 @@ public class KeycloakHandler {
 			return user;
 		} catch (Exception e) {
             e.printStackTrace();
+            throw new OpenemsException(e.getMessage());
         }
-		
-		throw new OpenemsNamedException(OpenemsError.GENERIC, "Exception while getting user for token"); 
-		
+				
 	}
 	
 	/***

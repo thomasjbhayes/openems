@@ -57,7 +57,10 @@
 	bnd.identity;id='io.openems.backend.timedata.dummy',\
 	bnd.identity;id='io.openems.backend.timedata.influx',\
 	bnd.identity;id='io.openems.backend.timedata.timescaledb',\
-	bnd.identity;id='io.openems.backend.uiwebsocket'
+	bnd.identity;id='io.openems.backend.uiwebsocket',\
+	bnd.identity;id='io.jsonwebtoken.jjwt-impl',\
+	bnd.identity;id='io.jsonwebtoken.jjwt-gson',\
+	bnd.identity;id='io.jsonwebtoken.jjwt-api'
 -runbundles: \
 	Java-WebSocket;version='[1.5.4,1.5.5)',\
 	com.google.gson;version='[2.10.1,2.10.2)',\
@@ -124,6 +127,6 @@
 	org.owasp.encoder;version='[1.2.3,1.2.4)',\
 	org.postgresql.jdbc;version='[42.6.0,42.6.1)',\
 	reactive-streams;version='[1.0.4,1.0.5)',\
-	io.jsonwebtoken.jjwt-api;version='0.12.3',\
-	io.jsonwebtoken.jjwt-gson;version='0.12.3',\
-	io.jsonwebtoken.jjwt-impl;version='0.12.3'
+	io.jsonwebtoken.jjwt-api;version='[0.12.3,0.12.4)',\
+	io.jsonwebtoken.jjwt-gson;version='[0.12.3,0.12.4)',\
+	io.jsonwebtoken.jjwt-impl;version='[0.12.3,0.12.4)'

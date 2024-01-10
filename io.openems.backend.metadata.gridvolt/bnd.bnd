@@ -13,6 +13,7 @@ Bundle-Version: 1.0.0.${tstamp}
 	org.postgresql.jdbc,\
 	io.jsonwebtoken.jjwt-api,\
 	io.jsonwebtoken.jjwt-gson,\
-	io.jsonwebtoken.jjwt-impl
+	io.jsonwebtoken.jjwt-impl, \
+	
 -testpath: \
 	${testpath}

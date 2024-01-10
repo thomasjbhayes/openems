@@ -39,6 +39,16 @@ public final class PgUserHandler {
 	 * @param token
 	 * @return
 	 */
+	
+	/**
+	 * 
+	 * @param id
+	 * @param username
+	 * @param token
+	 * @return
+	 * @throws SQLException
+	 * @throws OpenemsNamedException
+	 */
 	public User getUser(String id, String username, String token) throws SQLException, OpenemsNamedException {
 		try (var con = this.dataSource.getConnection();
 				var pst = con.prepareStatement(new StringBuilder() //
@@ -59,6 +69,18 @@ public final class PgUserHandler {
 		}
 		throw new OpenemsException("Unable to fetch User.");
 		
+	}
+	
+	public User getUserForId(String id) {
+		String sql = new StringBuilder()
+				.toString();
+		
+		try (Connection con = this.dataSource.getConnection();
+				PreparedStatement pst = con.prepareStatement(sql)) {
+			
+		}
+		
+		return new User();
 	}
 	
 	/**
