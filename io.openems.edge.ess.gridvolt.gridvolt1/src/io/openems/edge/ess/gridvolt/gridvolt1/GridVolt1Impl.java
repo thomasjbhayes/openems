@@ -3,6 +3,7 @@ package io.openems.edge.ess.gridvolt.gridvolt1;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.ComponentContext;
@@ -31,30 +32,38 @@ import io.openems.edge.bridge.modbus.api.BridgeModbus;
 import io.openems.edge.bridge.modbus.api.ModbusComponent;
 import io.openems.edge.bridge.modbus.api.ModbusProtocol;
 import io.openems.edge.common.channel.Channel;
+import io.openems.edge.common.channel.StateChannel;
+import io.openems.edge.common.channel.value.Value;
 import io.openems.edge.common.component.ComponentManager;
 import io.openems.edge.common.component.OpenemsComponent;
 import io.openems.edge.common.event.EdgeEventConstants;
 import io.openems.edge.common.startstop.StartStop;
+import io.openems.edge.common.startstop.StartStopConfig;
 import io.openems.edge.common.startstop.StartStoppable;
 import io.openems.edge.ess.api.ManagedSymmetricEss;
 import io.openems.edge.ess.api.SymmetricEss;
+import io.openems.edge.ess.gridvolt.gridvolt1.statemachine.StateMachine;
+import io.openems.edge.ess.gridvolt.gridvolt1.statemachine.StateMachine.State;
 import io.openems.edge.ess.power.api.Power;
 
 @Designate(ocd = Config.class, factory = true)
 @Component(//
-		name = "io.openems.edge.ess.gridvolt.gridvolt1", //
+		name = "ess.gridvolt.Gridvolt1", //
 		immediate = true, //
 		configurationPolicy = ConfigurationPolicy.REQUIRE //
 )
 @EventTopics({ //
 		EdgeEventConstants.TOPIC_CYCLE_BEFORE_PROCESS_IMAGE, //
 })
-public class GridVolt1Impl extends AbstractOpenemsModbusComponent implements GridVolt1, ManagedSymmetricEss, SymmetricEss, OpenemsComponent, EventHandler, ModbusComponent {
+public class GridVolt1Impl extends AbstractOpenemsModbusComponent implements GridVolt1, ManagedSymmetricEss, 
+				SymmetricEss, OpenemsComponent, EventHandler, ModbusComponent {
 
 	private Config config = null;
 	
 	private final Logger log = LoggerFactory.getLogger(GridVolt1Impl.class);
-
+	private final StateMachine stateMachine = new StateMachine(State.UNDEFINED);
+	
+	private StartStopConfig startStopConfig;
 	
 	@Reference
 	private ConfigurationAdmin cm;
@@ -85,10 +94,13 @@ public class GridVolt1Impl extends AbstractOpenemsModbusComponent implements Gri
 		super.activate(context, config.id(), config.alias(), config.enabled());
 		this.config = config;
 		
-		// Configure Inverter 
+		// update filter for batteryInverter 
 		if (OpenemsComponent.updateReferenceFilter(this.cm, this.servicePid(), "batteryInverter", this.config.inverter_id())) {
 			return;
 		}
+		
+		// update filter for Battery
+		if (OpenemsComponent.updateReferenceFilter(cm, this.servicePid(), "battery", this.config.battery_id()));
 	}
 
 	@Deactivate
@@ -122,10 +134,14 @@ public class GridVolt1Impl extends AbstractOpenemsModbusComponent implements Gri
 	}
 
 	@Override
-	public void setStartStop(StartStop value) throws OpenemsNamedException {
-		// TODO Auto-generated method stub
-		
+	public void setStartStop(StartStop value) {
+		if (this.startStopTarget.getAndSet(value) != value) {
+			// Set only if value changed
+			this.stateMachine.forceNextState(State.UNDEFINED);
+		}
 	}
+	
+	protected final AtomicReference<StartStop> startStopTarget = new AtomicReference<>(StartStop.UNDEFINED);
 	
 	protected ManagedSymmetricBatteryInverter getBatteryInverter() {
 		return this.batteryInverter;
@@ -190,6 +206,47 @@ public class GridVolt1Impl extends AbstractOpenemsModbusComponent implements Gri
 	@Override
 	public int getPowerPrecision() {
 		return this.batteryInverter.getPowerPrecision();
+	}
+
+	
+
+	@Override
+	public void _setMaxCCUStartAttemptsFault(boolean value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void _setMaxCCUStopAttemptsFault(boolean value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void _setMaxBatteryStartAttemptsFault(boolean value) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	@Override
+	public boolean isManaged() {
+		return this.batteryInverter.isManaged();
+	}
+
+	@Override
+	public StartStop getStartStopTarget() {
+		switch (this.startStopConfig) {
+		case AUTO:
+			return this.startStopTarget.get();
+		case START:
+			return StartStop.START;
+		case STOP:
+			return StartStop.STOP;
+		}
+		
+		assert false;
+		return StartStop.UNDEFINED;
 	}
 
 }

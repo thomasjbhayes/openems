@@ -44,25 +44,7 @@ public class MyConfig extends AbstractComponentConfig implements Config {
 	}
 
 	@Override
-	public boolean inverter1enabled() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
 	public String inverter_id() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean inverter2enabled() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public String inverter2_id() {
 		// TODO Auto-generated method stub
 		return null;
 	}
