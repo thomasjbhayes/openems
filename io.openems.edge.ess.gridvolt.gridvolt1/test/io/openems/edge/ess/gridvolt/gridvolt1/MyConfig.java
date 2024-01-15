@@ -1,6 +1,7 @@
 package io.openems.edge.ess.gridvolt.gridvolt1;
 
 import io.openems.common.test.AbstractComponentConfig;
+import io.openems.edge.common.startstop.StartStopConfig;
 
 @SuppressWarnings("all")
 public class MyConfig extends AbstractComponentConfig implements Config {
@@ -69,6 +70,12 @@ public class MyConfig extends AbstractComponentConfig implements Config {
 
 	@Override
 	public String Modbus_target() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public StartStopConfig startStop() {
 		// TODO Auto-generated method stub
 		return null;
 	}
