@@ -1,6 +1,7 @@
 package io.openems.edge.ess.gridvolt.gridvolt1;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -22,18 +23,20 @@ import org.slf4j.LoggerFactory;
 
 import io.openems.common.exceptions.OpenemsError.OpenemsNamedException;
 import io.openems.common.exceptions.OpenemsException;
-import io.openems.edge.battery.pylontech.powercubem2.PylontechPowercubeM2Battery;
+import io.openems.edge.battery.api.Battery;
+import io.openems.edge.batteryinverter.api.ManagedSymmetricBatteryInverter;
 import io.openems.edge.batteryinverter.api.SymmetricBatteryInverter;
-import io.openems.edge.batteryinverter.kaco.blueplanetgridsave.BatteryInverterKacoBlueplanetGridsave;
 import io.openems.edge.bridge.modbus.api.AbstractOpenemsModbusComponent;
 import io.openems.edge.bridge.modbus.api.BridgeModbus;
 import io.openems.edge.bridge.modbus.api.ModbusComponent;
 import io.openems.edge.bridge.modbus.api.ModbusProtocol;
+import io.openems.edge.common.channel.Channel;
 import io.openems.edge.common.component.ComponentManager;
 import io.openems.edge.common.component.OpenemsComponent;
 import io.openems.edge.common.event.EdgeEventConstants;
 import io.openems.edge.common.startstop.StartStop;
 import io.openems.edge.common.startstop.StartStoppable;
+import io.openems.edge.ess.api.ManagedSymmetricEss;
 import io.openems.edge.ess.api.SymmetricEss;
 import io.openems.edge.ess.power.api.Power;
 
@@ -46,7 +49,7 @@ import io.openems.edge.ess.power.api.Power;
 @EventTopics({ //
 		EdgeEventConstants.TOPIC_CYCLE_BEFORE_PROCESS_IMAGE, //
 })
-public class GridVolt1Impl extends AbstractOpenemsModbusComponent implements GridVolt1, OpenemsComponent, EventHandler, ModbusComponent {
+public class GridVolt1Impl extends AbstractOpenemsModbusComponent implements GridVolt1, ManagedSymmetricEss, SymmetricEss, OpenemsComponent, EventHandler, ModbusComponent {
 
 	private Config config = null;
 	
@@ -63,15 +66,10 @@ public class GridVolt1Impl extends AbstractOpenemsModbusComponent implements Gri
 	private Power power;
 	
 	@Reference(policy = ReferencePolicy.STATIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MANDATORY)
-	private SymmetricBatteryInverter inverter;
-	/*
-	@Reference(policy = ReferencePolicy.STATIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.OPTIONAL)
-	private final BatteryInverterKacoBlueplanetGridsave inverter2;
-	*/
-	//private final List<BatteryInverterKacoBlueplanetGridsave> inverters = new ArrayList<>();
+	private ManagedSymmetricBatteryInverter batteryInverter;
 	
 	@Reference(policy = ReferencePolicy.STATIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MANDATORY)
-	private PylontechPowercubeM2Battery battery;
+	private Battery battery;
 	
 	public GridVolt1Impl() {
 		super(//
@@ -88,17 +86,9 @@ public class GridVolt1Impl extends AbstractOpenemsModbusComponent implements Gri
 		this.config = config;
 		
 		// Configure Inverter 
-		if (this.config.inverter1enabled() &&
-				OpenemsComponent.updateReferenceFilter(this.cm, this.servicePid(), "inverter1", this.config.inverter1_id())) {
+		if (OpenemsComponent.updateReferenceFilter(this.cm, this.servicePid(), "batteryInverter", this.config.inverter_id())) {
 			return;
 		}
-		
-		/*
-		// Configure Inverter 2
-		if (this.config.inverter2enabled() &&
-				OpenemsComponent.updateReferenceFilter(this.cm, this.servicePid(), "inverter2", this.config.inverter2_id())) {
-			return;
-		} */
 	}
 
 	@Deactivate
@@ -120,7 +110,15 @@ public class GridVolt1Impl extends AbstractOpenemsModbusComponent implements Gri
 
 	@Override
 	public String debugLog() {
-		return "Hello World";
+		return "SoC:" + this.getSoc().asString() //
+				+ "|L:" + this.getActivePower().asString() //
+				+ "|Allowed:"
+				+ this.channel(ManagedSymmetricEss.ChannelId.ALLOWED_CHARGE_POWER).value().asStringWithoutUnit() + ";"
+				+ this.channel(ManagedSymmetricEss.ChannelId.ALLOWED_DISCHARGE_POWER).value().asString() //
+				+ "|" + this.getGridModeChannel().value().asOptionString(); //
+			//	+ "|Feed-In:"
+			//	+ this.channel(EssFeneconCommercial40.ChannelId.SURPLUS_FEED_IN_STATE_MACHINE).value().asOptionString();
+
 	}
 
 	@Override
@@ -128,10 +126,70 @@ public class GridVolt1Impl extends AbstractOpenemsModbusComponent implements Gri
 		// TODO Auto-generated method stub
 		
 	}
+	
+	protected ManagedSymmetricBatteryInverter getBatteryInverter() {
+		return this.batteryInverter;
+	}
 
-
-	protected PylontechPowercubeM2Battery getBattery() {
+	protected Battery getBattery() {
 		return this.battery;
+	}
+
+	@Override
+	public String id() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String alias() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isEnabled() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public ComponentContext getComponentContext() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Channel<?> _channel(String channelName) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Collection<Channel<?>> channels() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected ModbusProtocol defineModbusProtocol() throws OpenemsException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Power getPower() {
+		return this.power;
+	}
+
+	@Override
+	public void applyPower(int activePower, int reactivePower) throws OpenemsNamedException {
+		this.getBatteryInverter().run(this.getBattery(), activePower, reactivePower);
+	}
+
+	@Override
+	public int getPowerPrecision() {
+		return this.batteryInverter.getPowerPrecision();
 	}
 
 }

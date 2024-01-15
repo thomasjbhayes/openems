@@ -50,7 +50,7 @@ public class MyConfig extends AbstractComponentConfig implements Config {
 	}
 
 	@Override
-	public String inverter1_id() {
+	public String inverter_id() {
 		// TODO Auto-generated method stub
 		return null;
 	}
