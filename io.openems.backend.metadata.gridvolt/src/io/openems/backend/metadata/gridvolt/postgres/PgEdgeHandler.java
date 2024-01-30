@@ -458,6 +458,12 @@ public final class PgEdgeHandler {
 		}
 	}
 	
+	/**
+	 * Gets a map of edges associated with a particular user and the user's role with those edges.
+	 * @param user 	The User to get the roles for
+	 * @return HashMap<String, Role> where the keys are the edgeIds and the values are the roles.
+	 * @throws SQLException
+	 */
 	public HashMap<String, Role> getEdgeRolesForUser(User user) throws SQLException {
 		
 		HashMap<String, Role> roles = new HashMap<>();
