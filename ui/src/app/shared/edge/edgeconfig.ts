@@ -490,7 +490,7 @@ export class EdgeConfig {
                 ],
             },
             {
-                category: { title: 'Weitere', icon: 'radio-button-off-outline' },
+                category: { title: 'More', icon: 'radio-button-off-outline' },
                 factories: Object.values(this.factories),
             },
         ];
